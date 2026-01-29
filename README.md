@@ -1,149 +1,84 @@
-# MACDS - Multi-Agent Coding Development System
+# Redstone Platform
 
-A production-ready multi-agent system for automated software engineering that performs the full development lifecycle with enforced architectural invariants, execution-grounded feedback, and self-improvement capabilities.
+![Redstone Platform](./assets/coldstart.png)
 
-## Features
+> **The Elastic Multi-Agent Orchestration Platform for Modern Engineering.**
 
-- **7 Specialized Agents** with authority-based hierarchy
-- **Contract-Driven I/O** ensuring structured, validated communication
-- **Memory System** with decay across Working, Project, Skill, and Failure scopes
-- **DAG-Based Workflow** with automatic failure routing and escalation
-- **Artifact Management** with Git-backed versioning and ownership
-- **Execution-Grounded Feedback** from actual build and test results
+Redstone is the world's first **Elastic Multi-Agent Orchestration Platform** built for engineers, testers, and creative developers. It transforms software development from a constrained, manual process into an infinite, scalable workflow by deploying swarms of specialized AI agents to work alongside you.
 
-## Quick Start
+Whether you're a solo developer building an MVP or an enterprise team managing microservices, Redstone gives you an on-demand workforce to scale your capabilities.
 
-### Installation
+## Unlock Infinite Engineering Capacity
 
-```bash
-# Clone the repository
-git clone https://github.com/macds/macds.git
-cd macds
+In today's fast-paced digital economy, your ideas shouldn't be limited by hours in the day. Redstone breaks the linear relationship between time and output.
 
-# Install with pip
-pip install -e .
+By augmenting your workflow with an elastic digital workforce, Redstone allows you to:
+*   **Scale Your Team Instantly**: Spin up a full team of QA, Security, and Dev agents in seconds.
+*   **Reduce Operational Costs**: Automate repetitive tasks like refactoring, documentation, and testing for a fraction of the cost of manual labor.
+*   **Focus on Creativity**: Let agents handle the implementation details while you focus on high-level architecture and problem-solving.
 
-# Or use make
-make install
+## Key Capabilities
+
+### The Elastic Swarm Engine
+Redstone's core is a high-performance orchestration layer designed for **flexibility and composability**. Unlike rigid chatbot loops, the Swarm Engine executes complex, multi-stage workflows as Directed Acyclic Graphs (DAGs).
+
+*   **Custom Agent Definitions**: Define agents with unique personas, specific system prompts, and tool access permissions.
+*   **Model Agnostic**: Mix and match models (e.g., Claude 3.5 for Architecture, GPT-4o for Coding, Gemini Pro for Testing) within the same swarm.
+*   **Context Chaining**: The engine automatically manages context windows, passing outputs from upstream agents (like an Architect's design doc) to downstream agents (like an Implementation bot) losing zero fidelity.
+
+### Agent Stacks & Registry
+The **Redstone Registry** provides the building blocks for your swarms. You can compose teams using these specialized, pre-trained roles:
+
+*   **Architect Agent**: Defines system architecture, component boundaries, and enforces invariants.
+*   **Product Agent**: Translates user requirements into actionable specifications.
+*   **Build Test Agent**: Executes builds and runs tests with execution-grounded feedback.
+*   **Integrator Agent**: Merges changes and resolves conflicts.
+*   **Reviewer Agent**: Audits code for security and standards.
+*   **Infra Agent**: Handles CI/CD and deployment.
+*   **Implementation Agent**: Writes code following specifications.
+
+Don't want to build a team from scratch? Use our pre-configured **Stacks**:
+
+*   **Architect Pro**: Best for system design. Uses Claude 3.5 Sonnet.
+*   **Speed Demon**: Optimized for fast iteration. Uses GPT-4o-mini.
+*   **Full Stack**: Balanced stack for production. Combines Claude and GPT-4o.
+*   **Budget Builder**: Cost-effective development with Gemini Pro.
+*   **Security First**: Security-focused stack with enhanced review.
+
+### Custom Workflow Design
+For full control, use the **Redstone API** to design your own custom agent teams. Define workflows via **YAML** or **JSON** configuration, set permission boundaries, and script complex interactions between agents to suit your exact engineering needs.
+
+```yaml
+name: Feature Squad
+agents:
+  lead_architect:
+    type: architect
+    model: anthropic/claude-3.5-sonnet
+    temperature: 0.5
+  backend_dev:
+    type: custom
+    model: openai/gpt-4o
+    temperature: 0.3
+    system_prompt: |
+      You are a senior Python developer specializing in FastAPI.
+      Always include type hints and Pydantic models.
+connections:
+  - from: lead_architect
+    to: backend_dev
+focus: feature-development
 ```
 
-### Configuration
+## Ease of Use
 
-```bash
-# Copy environment template
-cp .env.example .env
+Redstone is designed to fit your workflow, not disrupt it.
 
-# Edit .env with your API key
-# At minimum, set one of:
-# - OPENROUTER_API_KEY
-# - OPENAI_API_KEY  
-# - ANTHROPIC_API_KEY
-```
+*   **Command Line Interface**: Control your swarm directly from the terminal with the `redstone` CLI.
+    ```bash
+    redstone run "Refactor the auth middleware" --stack speed-demon
+    ```
+*   **Zero-Config Start**: Agents fundamentally understand your codebase structure immediately.
+*   **Natural Language Control**: Direct your swarm with plain English instructions.
+*   **Visual Dashboard**: Watch your agents think, plan, and execute in real-time.
 
-### Usage
-
-```bash
-# Initialize MACDS in your project
-macds init
-
-# Run a development workflow
-macds run "Create a REST API for user management"
-
-# Run a specific agent
-macds agent ProductAgent "Define requirements for authentication"
-
-# Check system status
-macds status
-
-# Run example workflow
-macds example
-```
-
-## Docker
-
-```bash
-# Build image
-docker build -t macds:latest .
-
-# Run with Docker
-docker run -it --rm \
-  -v $(pwd)/workspace:/app/workspace \
-  -e OPENROUTER_API_KEY=$OPENROUTER_API_KEY \
-  macds:latest run "Create a calculator module"
-
-# Or use Docker Compose
-docker compose up macds
-```
-
-## Agent Hierarchy
-
-| Agent | Authority | Responsibility |
-|-------|-----------|----------------|
-| ArchitectAgent | 10 | System design, invariants, conflict resolution |
-| ProductAgent | 9 | Requirements, acceptance criteria |
-| BuildTestAgent | 8 | Build execution, testing, security |
-| IntegratorAgent | 8 | Change integration, merging |
-| ReviewerAgent | 7 | Code review, standards enforcement |
-| InfraAgent | 6 | CI/CD, infrastructure automation |
-| ImplementationAgent | 5 | Code generation |
-
-## Default Workflow
-
-```
-ProductAgent -> ArchitectAgent -> ImplementationAgent 
--> ReviewerAgent -> BuildTestAgent -> IntegratorAgent 
--> ArchitectAgent (final approval)
-```
-
-## Documentation
-
-- [Architecture](docs/ARCHITECTURE.md) - System design and components
-- [Workflows](docs/WORKFLOWS.md) - Workflow execution details
-- [Agents](docs/AGENTS.md) - Agent specifications
-- [Contracts](docs/CONTRACTS.md) - Contract system documentation
-- [Setup Guide](docs/SETUP.md) - Detailed installation instructions
-- [State of the Art](docs/STATE_OF_THE_ART.md) - Literature review
-
-## Development
-
-```bash
-# Install development dependencies
-make install-dev
-
-# Run tests
-make test
-
-# Run linting
-make lint
-
-# Format code
-make format
-```
-
-## Project Structure
-
-```
-macds/
-├── core/           # Core infrastructure
-│   ├── contracts.py
-│   ├── memory.py
-│   ├── artifacts.py
-│   ├── evaluation.py
-│   ├── orchestrator.py
-│   └── schema_loader.py
-├── agents/         # Agent implementations
-├── schemas/        # YAML schemas
-│   ├── contracts/
-│   └── artifacts/
-├── templates/      # Artifact templates
-├── tests/          # Test suite
-└── main.py         # CLI entry point
-```
-
-## Contributing
-
-Contributions are welcome. Please read the documentation and ensure all tests pass before submitting a pull request.
-
-## License
-
-MIT License - see [LICENSE](LICENSE) for details.
+---
+*Redstone Platform © 2026. Empowering engineers everywhere.*

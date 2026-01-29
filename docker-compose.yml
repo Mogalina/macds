@@ -1,43 +1,129 @@
-services:
-  macds:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: macds
-    volumes:
-      - ./workspace:/app/workspace
-      - macds-data:/app/.macds
-    environment:
-      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
-      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
-      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
-      - LOG_LEVEL=${LOG_LEVEL:-INFO}
-    working_dir: /app/workspace
-    tty: true
-    stdin_open: true
+# Redstone - Multi-Agent Coding Development System
+# Production Docker Compose Configuration
 
-  # Development service with hot reload
-  macds-dev:
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: redstone-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-redstone}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-redstone}
+      POSTGRES_DB: ${POSTGRES_DB:-redstone}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-redstone}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: redstone-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend API
+  backend:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: docker/backend.Dockerfile
       target: production
-    container_name: macds-dev
-    volumes:
-      - .:/app
-      - macds-dev-data:/app/.macds
+    container_name: redstone-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-redstone}:${POSTGRES_PASSWORD:-redstone}@postgres:5432/${POSTGRES_DB:-redstone}
+      - REDIS_URL=redis://redis:6379
+      - SECRET_KEY=${SECRET_KEY:-dev-secret-change-in-production}
+      - GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID:-}
+      - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET:-}
+      - GITHUB_REDIRECT_URI=${GITHUB_REDIRECT_URI:-http://localhost/github/callback}
+      - FRONTEND_URL=${FRONTEND_URL:-http://localhost}
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
-      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
-      - LOG_LEVEL=DEBUG
-    working_dir: /app
-    command: ["python", "-m", "macds.main", "status"]
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY:-}
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY:-}
+    volumes:
+      - workspaces_data:/app/workspaces
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Frontend
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/frontend.Dockerfile
+      target: production
+      args:
+        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost}
+    container_name: redstone-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    environment:
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost}
+    ports:
+      - "3000:3000"
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Nginx Reverse Proxy (for production)
+  nginx:
+    image: nginx:alpine
+    container_name: redstone-nginx
+    restart: unless-stopped
     profiles:
-      - dev
+      - production
+    depends_on:
+      - backend
+      - frontend
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./docker/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./docker/ssl:/etc/nginx/ssl:ro
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/nginx-health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
 volumes:
-  macds-data:
+  postgres_data:
     driver: local
-  macds-dev-data:
+  redis_data:
     driver: local
+  workspaces_data:
+    driver: local
+
+networks:
+  default:
+    name: redstone-network
